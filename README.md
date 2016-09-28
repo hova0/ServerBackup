@@ -10,4 +10,4 @@ The basic commands implemented are copy, delete, zip, hash, and simulate.  Futur
 #### File Selection
 To select files upon which to execute commands, a file selector needs to be used.  Two file selectors are implemented, match by regular expression, and match by time.   These two can be combined.
 
-A basic usage would be 'serverbackup.exe copy c:\source\ d:\destination\ -include .*txt -newerthan 30` which copies all files that end in `.txt` and are also less than 30 days old to the destination.
+A basic usage would be `serverbackup.exe copy c:\source\ d:\destination\ -include .*txt -newerthan 30` which copies all files that end in `.txt` and are also less than 30 days old to the destination.
