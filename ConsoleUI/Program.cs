@@ -120,8 +120,11 @@ namespace ServerBackup
                     Console.WriteLine("-olderthan <number>              Include files older than <number> days old");
                     Console.WriteLine("-verify                          Verifies that a file was copied correctly by comparing MD5");
                     Console.WriteLine("-ensurespace                     Ensures the destination has free space before copy.  Will error if not.");
+                    Console.WriteLine("                                 Not supported on some destinations.");
                     Console.WriteLine("-simulate                        Print action to console instead of executing");
+                    Console.WriteLine("                                     Useful to test file matching is correct.");
                     Console.WriteLine("-threads <number>                Enable multithreading.  Zip files cannot be threaded.");
+                    Console.WriteLine("                                     This usually degrades performance.");
                     return 0;
                 }
 

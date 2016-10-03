@@ -10,7 +10,7 @@ namespace ServerBackup
     public class CommandCopy : ICommand
     {
         //public String Destination { get; set; }
-
+        public bool Overwrite { get; set; }
         public bool Verify { get; set; }
         public string OriginalHashValue { get; set; }
         //public bool Recurse { get; set; }
@@ -58,8 +58,13 @@ namespace ServerBackup
             }
             if (System.IO.File.Exists(destinationfilename))
             {
-                log.Info(destinationfilename + " already exists.  Skipped.");
-                return true;
+                if (Overwrite)
+                    System.IO.File.Delete(destinationfilename);
+                else
+                {
+                    log.Info(destinationfilename + " already exists.  Skipped.");
+                    return true;
+                }
             }
             //If destination directory does not exist, create it.
             if (!System.IO.Directory.Exists(System.IO.Path.GetDirectoryName(destinationfilename)))

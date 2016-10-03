@@ -7,34 +7,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace ServerBackupTest
 {
-    public class StubLogger : ServerBackup.IInternalLogger
-    {
-        public void Error(String message, Exception e)
-        {
-            if(!string.IsNullOrEmpty(message))
-            Console.WriteLine("[STUB]" + message);
-        }
-
-        public void Fatal(String message, Exception e)
-        {
-            if (!string.IsNullOrEmpty(message))
-                Console.WriteLine("[STUB]" + message);
-        }
-
-        public void Info(String message)
-        {
-            if (!string.IsNullOrEmpty(message))
-                Console.WriteLine("[STUB]" + message);
-        }
-        public void Warn(string message)
-        {
-            Console.WriteLine(message);
-        }
-        public void Debug(string message)
-        {
-            Console.WriteLine(message);
-        }
-    }
+    
 
 
     [TestClass]
@@ -86,7 +59,22 @@ namespace ServerBackupTest
             Console.WriteLine(cc.OriginalHashValue);
             CleanupFiles("CopyCommandSimulateTests2");
         }
+        [TestMethod]
+        public void CopyCommandTestOverwrite()
+        {
+            SetUpFiles("CopyCommandOverwrite");
+            System.IO.File.WriteAllLines(@"C:\temp\CopyCommandOverwritedir2\TestFile1.txt", new string[] { "This file is supposed to be overwritten." });
+            StubLogger sl = new StubLogger();
+            ServerBackup.CommandCopy cc = new ServerBackup.CommandCopy(sl);
+            cc.Overwrite = true;
+            cc.Run(@"C:\temp\CopyCommandOverwritedir1\TestFile1.txt", @"C:\temp\CopyCommandOverwritedir2\TestFile1.txt");
+            string[] alllines = System.IO.File.ReadAllLines(@"C:\temp\CopyCommandOverwritedir2\TestFile1.txt");
+            Assert.IsTrue(alllines[0] != "This file is supposed to be overwritten.");
+            
 
+            CleanupFiles("CopyCommandOverwrite");
+
+        }
 
 
 

@@ -113,6 +113,12 @@ namespace ServerBackup.Configuration
                 ((CommandZip)cc.Command).DestinationFileName = cc.DestinationDirectory;
                 ((CommandZip)cc.Command).BaseDirectory = cc.SourceDirectory;
             }
+            if (cc.Command is CommandCopy && !String.IsNullOrEmpty(nvc["Overwrite"]))
+            {
+                bool b = false;
+                Boolean.TryParse(nvc["Overwrite"], out b);
+                ((CommandCopy)cc.Command).Overwrite = b;
+            }
             //Ensure free space  (Usually used for Copy commands)
             if (!String.IsNullOrEmpty(nvc["EnsureFreeSpace"]))
             {
@@ -126,7 +132,7 @@ namespace ServerBackup.Configuration
             rst.InitialScheduleTime = DateTime.Parse(nvc["ScheduleTime"]);
             if (!string.IsNullOrEmpty(nvc["Recurrance"]))
             {
-                
+
                 switch (nvc["Recurrance"])
                 {
                     case "Daily": rst.RecurringType = Scheduler.ScheduleTypes.Daily; break;
@@ -167,7 +173,7 @@ namespace ServerBackup.Configuration
                 if (!string.IsNullOrEmpty(nvc["OlderThan"]))
                     cc.fs.IncludeMatchers.Add(new FileTimeMatcher(int.Parse(nvc["OlderThan"]), FileTimeMatcher.TimeCompare.OlderThan));
                 if (!string.IsNullOrEmpty(nvc["NewerThan"]))
-                    cc.fs.IncludeMatchers.Add(new FileTimeMatcher(int.Parse(nvc["NewerThan"]), FileTimeMatcher.TimeCompare.NewerThan ));
+                    cc.fs.IncludeMatchers.Add(new FileTimeMatcher(int.Parse(nvc["NewerThan"]), FileTimeMatcher.TimeCompare.NewerThan));
             }
             catch (Exception e)
             {
@@ -176,10 +182,10 @@ namespace ServerBackup.Configuration
             }
             if (!string.IsNullOrEmpty(nvc["Simulate"]))
                 cc.Command.Simulate = bool.Parse(nvc["Simulate"]);
-            if(!String.IsNullOrEmpty(nvc["EmailonCompletion"]) || !String.IsNullOrEmpty(nvc["EmailOnCompletion"]))
+            if (!String.IsNullOrEmpty(nvc["EmailonCompletion"]) || !String.IsNullOrEmpty(nvc["EmailOnCompletion"]))
             {
                 bool emailoncompletion = false;
-                if(! bool.TryParse(nvc["EmailonCompletion"], out emailoncompletion))
+                if (!bool.TryParse(nvc["EmailonCompletion"], out emailoncompletion))
                     bool.TryParse(nvc["EmailOnCompletion"], out emailoncompletion);
                 cc.EmailonCompletion = emailoncompletion;
             }
@@ -243,7 +249,7 @@ namespace ServerBackup.Configuration
                 //cc.RecurringSchedule = configelement["Recurrance"];
                 switch (configelement["Recurrance"])
                 {
-                    case "Daily": rst.RecurringType= Scheduler.ScheduleTypes.Daily; break;
+                    case "Daily": rst.RecurringType = Scheduler.ScheduleTypes.Daily; break;
                     case "Weekly": rst.RecurringType = Scheduler.ScheduleTypes.Weekly; break;
                     case "Once": rst.RecurringType = Scheduler.ScheduleTypes.Once; break;
                     case "Monthly": rst.RecurringType = Scheduler.ScheduleTypes.Monthly; break;
