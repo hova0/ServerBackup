@@ -25,6 +25,14 @@ namespace ServerBackup.Tests
         }
 
         [TestMethod()]
+        public void MultipleEmailSendTest()
+        {
+            Assert.IsTrue(email.Send("Test@example.com;Test2@example.com", "someone@example.com", "test Subject", "test Body"));
+            Assert.IsTrue(email.Send("Test@example.com,Test2@example.com", "someone@example.com", "test Subject", "test Body"));
+        }
+
+
+        [TestMethod()]
         public void EmailIsEmailConfiguredTest()
         {
             Console.WriteLine(EWR.ServerBackup.Library.email.IsEmailConfigured());
