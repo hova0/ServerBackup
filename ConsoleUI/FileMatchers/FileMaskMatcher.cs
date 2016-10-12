@@ -26,7 +26,7 @@ namespace ServerBackup
                 {
                     regexmask = new System.Text.RegularExpressions.Regex(_mask, RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
                 }
-                catch (System.ArgumentException ae)
+                catch (System.ArgumentException)
                 {
                     _mask = null;
                     regexmask = null;

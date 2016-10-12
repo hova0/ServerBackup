@@ -47,6 +47,10 @@ namespace ServerBackup
             byte[] buffer = new byte[16384];
             bool copyaborted = false;
             HashAlgorithm localhashfunction = null;
+            bool updateDestinationFileTimes = false;
+            DateTime originalLastWriteTime = DateTime.Now;
+            DateTime originalCreationTime = DateTime.Now;
+            DateTime originalLastAccessTime = DateTime.Now;
             //Early exit
             if (cancellationToken.IsCancellationRequested)
                 return false;
@@ -56,15 +60,20 @@ namespace ServerBackup
                 log.Info(String.Format("Copy {0} => {1}", sourcefilename, destinationfilename));
                 return true;
             }
-            if (System.IO.File.Exists(destinationfilename))
+            if (System.IO.File.Exists(destinationfilename) )
             {
-                if (Overwrite)
-                    System.IO.File.Delete(destinationfilename);
-                else
+                if (!Overwrite)
                 {
                     log.Info(destinationfilename + " already exists.  Skipped.");
                     return true;
                 }
+
+                // Overwriting existing file, but need to preserve origin times
+                System.IO.FileInfo originalfile = new System.IO.FileInfo(sourcefilename);
+                originalLastWriteTime = originalfile.LastWriteTime;
+                originalCreationTime = originalfile.CreationTime;
+                originalLastAccessTime = originalfile.LastAccessTime;
+                updateDestinationFileTimes = true;
             }
             //If destination directory does not exist, create it.
             if (!System.IO.Directory.Exists(System.IO.Path.GetDirectoryName(destinationfilename)))
@@ -80,7 +89,7 @@ namespace ServerBackup
             
 
 
-            using (System.IO.FileStream ws = new System.IO.FileStream(destinationfilename, System.IO.FileMode.CreateNew))
+            using (System.IO.FileStream ws = new System.IO.FileStream(destinationfilename, Overwrite ? System.IO.FileMode.OpenOrCreate : System.IO.FileMode.CreateNew))
             {
 
                 System.IO.FileStream rs = null; 
@@ -171,6 +180,14 @@ namespace ServerBackup
 
                 }
 
+            }
+            //Restore last write time to desetination.
+            if (updateDestinationFileTimes)
+            {
+                System.IO.FileInfo destinationfile = new System.IO.FileInfo(destinationfilename);
+                destinationfile.LastWriteTime = originalLastWriteTime;
+                destinationfile.LastAccessTime = originalLastAccessTime;
+                destinationfile.CreationTime = originalCreationTime;
             }
             CommandResult = destinationfilename;
 

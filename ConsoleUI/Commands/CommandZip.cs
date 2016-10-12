@@ -52,7 +52,7 @@ namespace ServerBackup
 
         public async Task<Boolean> RunAsync(String sourcefilename, String destinationfilename, CancellationToken cancellationToken)
         {
-            //Unfortunately, you cannot multithread this.
+            //Unfortunately, you cannot multithread this.   Hence the compiler warning.
 
             byte[] buffer = new byte[16384];
             bool copyaborted = false;

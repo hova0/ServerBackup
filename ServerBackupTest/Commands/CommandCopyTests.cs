@@ -64,13 +64,16 @@ namespace ServerBackupTest
         {
             SetUpFiles("CopyCommandOverwrite");
             System.IO.File.WriteAllLines(@"C:\temp\CopyCommandOverwritedir2\TestFile1.txt", new string[] { "This file is supposed to be overwritten." });
+            System.IO.FileInfo fi = new System.IO.FileInfo(@"C:\temp\CopyCommandOverwritedir1\TestFile1.txt");
+            fi.LastWriteTime = new DateTime(2000, 01, 01);
+
             StubLogger sl = new StubLogger();
             ServerBackup.CommandCopy cc = new ServerBackup.CommandCopy(sl);
             cc.Overwrite = true;
             cc.Run(@"C:\temp\CopyCommandOverwritedir1\TestFile1.txt", @"C:\temp\CopyCommandOverwritedir2\TestFile1.txt");
             string[] alllines = System.IO.File.ReadAllLines(@"C:\temp\CopyCommandOverwritedir2\TestFile1.txt");
             Assert.IsTrue(alllines[0] != "This file is supposed to be overwritten.");
-            
+            Assert.IsTrue(System.IO.File.GetLastWriteTime(@"C:\temp\CopyCommandOverwritedir2\TestFile1.txt") == new DateTime(2000, 01, 01));
 
             CleanupFiles("CopyCommandOverwrite");
 

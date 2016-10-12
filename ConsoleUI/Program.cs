@@ -17,7 +17,7 @@ namespace ServerBackup
         /// </summary>
         
         static bool fatalError = false;
-        static int exitcode = 0;
+
 
         public static IInternalLogger _Logger = new Loggers.ConsoleLogger();   //Always direct output to console 
 
@@ -352,7 +352,7 @@ namespace ServerBackup
                 if (System.IO.Directory.Exists(src))
                     return src;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 Console.WriteLine(src + " is not a valid directory!");
                 fatalError = true;
