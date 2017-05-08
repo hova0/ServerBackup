@@ -32,14 +32,7 @@ namespace ServerBackup
             // ExcludeMask = new List<string>();
             IncludeMatchers = new List<IFileMatcher>();
             ExcludeMatchers = new List<IFileMatcher>();
-            if (System.IO.Directory.Exists(basePath))
-            {
-                baseDirectory = new System.IO.DirectoryInfo(basePath);
-            }
-            else
-            {
-                throw new Exception("Directory does not exist or access denied.");
-            }
+            baseDirectory = new System.IO.DirectoryInfo(basePath);
         }
 
         public IEnumerable<FileInfo> FileList()
