@@ -62,11 +62,20 @@ namespace ServerBackup.Scheduler
 
                         if (cc.EnsureFreeSpace)
                         {
-                            //Run space calculation before main command
-                            FileSelector fs2 = null;
-                            EWR.ServerBackup.Library.IOHelper.DoRetryIO(() => fs2 = cc.fs.DeepClone());
                             try
                             {
+                                //Run space calculation before main command
+                                FileSelector fs2 = null;
+                                EWR.ServerBackup.Library.IOHelper.DoRetryIO(() => fs2 = cc.fs.DeepClone());
+                                if (fs2 == null)
+                                {
+                                    // Couldn't reach source directory
+                                    if (EWR.ServerBackup.Library.email.IsEmailConfigured())
+                                        EWR.ServerBackup.Library.email.Send(this.AlertEmail, ServerBackup.Program.ServerBackupFromEmail, "Could not reach source directory", String.Format("Could not reach source directory: {0}", cc.SourceDirectory));
+                                    cc.Schedule.AdvanceTime();
+                                    continue;
+                                }
+
                                 CommandEnsureFreeSpace cmdfreespace = new CommandEnsureFreeSpace();
                                 CommandRunner cr2 = new CommandRunner(this._logger);
                                 cr2.BaseDirectory = cc.SourceDirectory;
@@ -84,11 +93,12 @@ namespace ServerBackup.Scheduler
                                     cc.Schedule.AdvanceTime();
                                     continue;
                                 }
-                            }catch(Exception e)
+                            }
+                            catch (Exception e)
                             {
                                 this._logger.Error("Unhandled Exception", e);
                                 if (EWR.ServerBackup.Library.email.IsEmailConfigured())
-                                    EWR.ServerBackup.Library.email.Send(this.AlertEmail, ServerBackup.Program.ServerBackupFromEmail,"Unhandled Exception", String.Format("{0} \r\n {1}", e.Message, e.StackTrace));
+                                    EWR.ServerBackup.Library.email.Send(this.AlertEmail, ServerBackup.Program.ServerBackupFromEmail, "Unhandled Exception", String.Format("{0} \r\n {1}", e.Message, e.StackTrace));
                                 cc.Schedule.AdvanceTime();
                                 continue;
                             }

@@ -97,6 +97,8 @@ namespace ServerBackup
 
         public FileSelector DeepClone()
         {
+            if (baseDirectory == null || (!baseDirectory.Exists))
+                return null;
             FileSelector fs = new ServerBackup.FileSelector(baseDirectory.FullName);
             foreach (IFileMatcher ix in IncludeMatchers)
             {
