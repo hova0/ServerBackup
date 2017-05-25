@@ -35,6 +35,8 @@ namespace ServerBackup
         {
             if (args.Length == 0)
             {
+                Console.WriteLine("Serverbackup launching as a SERVICE.   Use ServerBackup --help for launch options");
+                Console.WriteLine("To install ServerBackup as a service, use the command \"sc create\"");
                 ServiceBase[] ServicesToRun;
                 ServicesToRun = new ServiceBase[]
                 {
@@ -78,8 +80,8 @@ namespace ServerBackup
 
 
 
-            List<Tuple<string, string>> cmdargs = ParseArguments(args);
-            if (cmdargs.Count > 0 && NormalizeKey(cmdargs[0].Item1) == "help" || NormalizeKey(cmdargs[0].Item1) == "?")
+            System.Collections.Specialized.NameValueCollection cmdargs = ParseArguments(args);
+            if (cmdargs.Count > 0 && cmdargs.AllKeys.Contains("help") || cmdargs.AllKeys.Contains("?"))
             {
                 //Print help
                 Console.WriteLine("[ServerBackup Help]");
@@ -111,7 +113,7 @@ namespace ServerBackup
                 Console.WriteLine("-simulate                        Print action to console instead of executing");
                 Console.WriteLine("                                     Useful to test file matching is correct.");
                 Console.WriteLine("-threads <number>                Enable multithreading.  Zip files cannot be threaded.");
-                Console.WriteLine("                                     This usually degrades performance.");
+                Console.WriteLine("                                     This usually degrades performance on single disks.");
                 Console.WriteLine();
                 Console.WriteLine("Exit Codes:");
                 Console.WriteLine("0 - No Error");
@@ -122,7 +124,7 @@ namespace ServerBackup
                 return 0;
             }
 
-            string maincommand = cmdargs[0].Item1;
+            string maincommand = cmdargs.Keys[0];
             ICommand c = null;
             CommandRunner cr = new CommandRunner(_Logger);
             try
@@ -136,15 +138,15 @@ namespace ServerBackup
             }
             //Since hashing and zip output to single files, not directories, Set the appropriate Destination File Name property
             if (c is CommandHash)
-                ((CommandHash)c).DestinationFileName = cmdargs[2].Item1;
+                ((CommandHash)c).DestinationFileName = cmdargs.Keys[2];
             if (c is CommandZip)
             {
-                ((CommandZip)c).DestinationFileName = cmdargs[2].Item1;
+                ((CommandZip)c).DestinationFileName = cmdargs.Keys[2];
                 ((CommandZip)c).BaseDirectory = GetSource(cmdargs);
             }
 
             //Set simulate mode if specified
-            if (cmdargs.Any(x => NormalizeKey(x.Item1) == "simulate"))
+            if (cmdargs.AllKeys.Any(x => NormalizeKey(x) == "simulate"))
                 c.Simulate = true;
 
             //Create File Selector 
@@ -155,22 +157,22 @@ namespace ServerBackup
 
             cr.DestinationDirectory = GetDest(cmdargs);
             cr.Threads = 1;  //Default no threading
-            if (cmdargs.Any(x => NormalizeKey(x.Item1) == "threads"))
+            if (cmdargs.AllKeys.Contains("threads"))
             {
                 int t = 1;
-                Int32.TryParse(cmdargs.First(x => NormalizeKey(x.Item1) == "threads").Item2, out t);
+                Int32.TryParse(cmdargs["threads"], out t);
                 cr.Threads = t;
             }
             //Check global flag to see if there was any problem in getting source of dest directories
             if (fatalError)
                 return (int)ExitCodes.InvalidArguments;
 
-            if (cmdargs.Any(x => NormalizeKey(x.Item1) == "recurse"))
+            if (cmdargs.AllKeys.Contains("recurse"))
                 fs.Recurse = true;
             // Check to see if the user wanted a special Hashing algorithm.  Default is md5
-            if (cmdargs.Any(x => NormalizeKey(x.Item1) == "hashalg"))
+            if (cmdargs.AllKeys.Contains("hashalg"))
             {
-                string hasharg = cmdargs.First(z => NormalizeKey(z.Item1) == "hashalg").Item2;
+                string hasharg = cmdargs["hashalg"]; //.First(z => NormalizeKey(z.Item1) == "hashalg").Item2;
                 if (c is CommandCopy)
                     ((CommandCopy)c).HashingFunction = DeriveHashingFunction(hasharg);
                 if (c is CommandHash)
@@ -179,13 +181,13 @@ namespace ServerBackup
             //Verify the copy succeeded (will take longer)
             //This operates by calculating an md5 hash during copy and then rereading only the destination and recalculating the hash
             //Source file is only read once, Destination file is written, and then read.
-            if (c is CommandCopy && cmdargs.Any(x => NormalizeKey(x.Item1) == "verify"))
+            if (c is CommandCopy && cmdargs.AllKeys.Contains("verify"))
             {
                 ((CommandCopy)c).Verify = true;
             }
 
             //Ensure free space
-            if (cmdargs.Any(x => NormalizeKey(x.Item1) == "ensurespace"))
+            if (cmdargs.AllKeys.Contains("ensurespace"))
             {
                 //Run space calculation before main command
                 FileSelector fs2 = GetSelector(cmdargs);
@@ -245,7 +247,7 @@ namespace ServerBackup
             return c;
         }
 
-        static FileSelector GetSelector(List<Tuple<string, string>> cmdargs)
+        static FileSelector GetSelector(System.Collections.Specialized.NameValueCollection cmdargs)
         {
             //Build up FileSelector from arguments
             string sourcedirectory = GetSource(cmdargs);
@@ -284,7 +286,7 @@ namespace ServerBackup
             }
             return System.Security.Cryptography.HashAlgorithmName.MD5;
         }
-        public static IFileMatcher[] ParseIncludeMatchers(List<Tuple<string, string>> cmdargs)
+        public static IFileMatcher[] ParseIncludeMatchers(System.Collections.Specialized.NameValueCollection cmdargs)
         {
             List<IFileMatcher> matchers = new List<IFileMatcher>();
             foreach (Tuple<string, string> keyvalue in cmdargs)
@@ -317,33 +319,33 @@ namespace ServerBackup
             }
             return matchers.ToArray();
         }
-        public static IFileMatcher[] ParseExcludeMatchers(List<Tuple<string, string>> cmdargs)
+        public static IFileMatcher[] ParseExcludeMatchers(System.Collections.Specialized.NameValueCollection cmdargs)
         {
             List<IFileMatcher> matchers = new List<IFileMatcher>();
-            foreach (Tuple<string, string> keyvalue in cmdargs)
+            foreach (string keyvalue in cmdargs.Keys)
             {
-                string normalizedkey = NormalizeKey(keyvalue.Item1);
+                string normalizedkey = NormalizeKey(keyvalue);
                 if (normalizedkey == "exclude")
                 {
                     try
                     {
-                        matchers.Add(new FileMaskMatcher(keyvalue.Item2));
+                        matchers.Add(new FileMaskMatcher(cmdargs[keyvalue]));
                     }
                     catch (Exception e)
                     {
                         Console.Error.WriteLine(e.Message);
-                        Console.Error.WriteLine(string.Format("[ERROR] Discarded invalid filemask {0}", keyvalue.Item2));
+                        Console.Error.WriteLine(string.Format("[ERROR] Discarded invalid filemask {0}", cmdargs[keyvalue]));
                     }
                 }
             }
             return matchers.ToArray();
         }
 
-        public static string GetSource(List<Tuple<string, string>> cmdargs)
+        public static string GetSource(System.Collections.Specialized.NameValueCollection cmdargs)
         {
             if (cmdargs.Count < 2)
                 return null;
-            string src = cmdargs[1].Item1;
+            string src = cmdargs.Keys[1];
             try
             {
                 if (System.IO.Directory.Exists(src))
@@ -361,12 +363,12 @@ namespace ServerBackup
             //throw new Exception(String.Format("Source directory {0} does not exist!", src));
         }
 
-        public static string GetDest(List<Tuple<string, string>> cmdargs)
+        public static string GetDest(System.Collections.Specialized.NameValueCollection cmdargs)
         {
 
             if (cmdargs.Count < 3)
                 return null;
-            string src = cmdargs[2].Item1;
+            string src = cmdargs.AllKeys[2];
             //Destination may not exist, will be created when command executes
             return src;
         }
@@ -387,9 +389,9 @@ namespace ServerBackup
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
-        public static List<Tuple<string, string>> ParseArguments(string[] args)
+        public static System.Collections.Specialized.NameValueCollection ParseArguments(string[] args)
         {
-            List<Tuple<string, string>> cmdlist = new List<Tuple<string, string>>();
+            System.Collections.Specialized.NameValueCollection cmdlist = new System.Collections.Specialized.NameValueCollection();
 
             int i = 0;
             while (i < args.Length)
@@ -404,11 +406,11 @@ namespace ServerBackup
                 {
                     // If the next param is not a switch but a value
                     value = args[i + 1];
-                    i++;
+                    i++;    //skip parsing the switch argument
                 }
                 //}
                 if (key != null)
-                    cmdlist.Add(new Tuple<string, string>(key, value));
+                    cmdlist.Add( NormalizeKey(key), value);
                 i++;
             }
 
