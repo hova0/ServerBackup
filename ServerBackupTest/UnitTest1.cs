@@ -13,7 +13,7 @@ namespace ServerBackupTest
             var z = ServerBackup.Program.ParseArguments(args);
 
             Assert.IsTrue(z.Keys[0] == "commanditem");
-            Assert.IsTrue(z.AllKeys[1] == "-switch");
+            Assert.IsTrue(z.AllKeys[1] == "switch");
             Assert.IsTrue(z[1] == "switchvalue");
 
 
