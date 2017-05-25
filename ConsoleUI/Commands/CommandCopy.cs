@@ -23,6 +23,8 @@ namespace ServerBackup
         public void Initialize() { }
         public void Close() { }
 
+        public object lockObject = new object();
+
         //public String Source { get; set; }
         public CommandCopy(IInternalLogger _logger)
         {

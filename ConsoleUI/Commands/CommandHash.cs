@@ -10,7 +10,8 @@ namespace ServerBackup
     public class CommandHash : ICommand, IDisposable
 
     {
-        public String CommandResult { get { return sb.ToString(); } set { } }
+        public String CommandResult { get {
+                lock (lockObject) { return sb.ToString(); }  } set { } }
         public Boolean Simulate { get; set; }
         public System.Security.Cryptography.HashAlgorithmName HashingFunction { get; set; }
         public string DestinationFileName { get; set; }
@@ -18,6 +19,8 @@ namespace ServerBackup
         private System.IO.StreamWriter hashoutputfile;
         private System.Text.StringBuilder sb = new StringBuilder();
         private IInternalLogger log;
+        private object lockObject = new object();
+
         public CommandHash(IInternalLogger _logger)
         {
             log = _logger;
@@ -73,19 +76,11 @@ namespace ServerBackup
             }
 
             //Write hash out to file
-            lock (this)
+            lock (lockObject)
             {
-                //using (System.IO.StreamWriter sw = new System.IO.StreamWriter(DestinationFileName, true))
-                //{
-                //sw.WriteLine(sourcefilename + "\t" + stringhash);
-                lock (this)
-                {
-                    if (hashoutputfile != null)
-                        hashoutputfile.WriteLine(sourcefilename + "\t" + stringhash);
-                }
+                if (hashoutputfile != null)
+                    hashoutputfile.WriteLine(sourcefilename + "\t" + stringhash);
                 sb.AppendLine(sourcefilename + "\t" + stringhash);
-                //sw.Close();
-                //}
             }
 
             return true;

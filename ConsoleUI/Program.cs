@@ -44,14 +44,15 @@ namespace ServerBackup
                 };
                 ServiceBase.Run(ServicesToRun);
                 return 0;
-                
+
             }
 
             Console.CancelKeyPress += Console_CancelKeyPress;
 
 
-            if (args[0] == "testservice")
+            if (args[0] == "daemon")
             {
+                //This is for primarily testing the Service mode.
                 Scheduler.Scheduler mainscheduler = new Scheduler.Scheduler(_Logger);
                 Configuration.ConfigurationUtil cu = new Configuration.ConfigurationUtil(_Logger);
                 mainscheduler = new Scheduler.Scheduler(_Logger);
@@ -66,7 +67,7 @@ namespace ServerBackup
                 Console.WriteLine("Scheduler loop running.  Press CTRL+C to stop");
                 while (true)
                 {
-                    System.Threading.Thread.Sleep(100);
+                    System.Threading.Thread.Sleep(200);
                     if (cts.IsCancellationRequested)
                         break;
                 }
@@ -81,48 +82,16 @@ namespace ServerBackup
 
 
             System.Collections.Specialized.NameValueCollection cmdargs = ParseArguments(args);
+            //List of valid switches, if they typoed or something, show them help (first three arguments are command, source, destination)
+            string[] validSwitches = new string[] { "simulate", "threads", "verify", "ensurespace", "olderthan", "newerthan", "include", "exclude", "hashalg", "recurse" };
+            if (cmdargs.AllKeys.Length > 3)
+                foreach (string _cmdswitch in cmdargs.AllKeys.Skip(3))
+                    if (!validSwitches.Contains(_cmdswitch))
+                        return PrintHelp();
+
             if (cmdargs.Count > 0 && cmdargs.AllKeys.Contains("help") || cmdargs.AllKeys.Contains("?"))
-            {
-                //Print help
-                Console.WriteLine("[ServerBackup Help]");
-                Console.WriteLine("ServerBackup <command> <source> <dest> [options]");
-                Console.WriteLine();
-                Console.WriteLine("Commands:");
-                Console.WriteLine("copy                  Copies files from <source> to <dest>");
-                Console.WriteLine("hash                  Checksum on <source> written to <dest>");
-                Console.WriteLine("delete                Deltes files in <source>");
-                Console.WriteLine("verify                Verifies md5sums in <source> against <dest>");
-                //Console.WriteLine("simulate              Simulates a copy by printing to console");
-                Console.WriteLine();
-                Console.WriteLine("Options:");
-                Console.WriteLine("-include <regex mask>            Includes files matching regular expression");
-                Console.WriteLine("-exclude <regex mask>            Excludes files matching regular expression");
-                Console.WriteLine();
-                Console.WriteLine("Note: If -include is specified, only files matching will be included in <source>");
-                Console.WriteLine("      If -exclude is specified, only files that do not match will be included in <source>");
-                Console.WriteLine("      If both -include and -exlude is specified, only files matching -include EXCEPT for ones that also match -exclude will be in <source>");
-                Console.WriteLine("      Lastly, multiple -include and -exclude expressions can be used.");
-                Console.WriteLine();
-                Console.WriteLine("-newerthan <date>                Include files newer than date");
-                Console.WriteLine("-newerthan <number>              Include files newer than <number> days old");
-                Console.WriteLine("-olderthan <date>                Include files older than date");
-                Console.WriteLine("-olderthan <number>              Include files older than <number> days old");
-                Console.WriteLine("-verify                          Verifies that a file was copied correctly by comparing MD5");
-                Console.WriteLine("-ensurespace                     Ensures the destination has free space before copy.  Will error if not.");
-                Console.WriteLine("                                 Not supported on some destinations.");
-                Console.WriteLine("-simulate                        Print action to console instead of executing");
-                Console.WriteLine("                                     Useful to test file matching is correct.");
-                Console.WriteLine("-threads <number>                Enable multithreading.  Zip files cannot be threaded.");
-                Console.WriteLine("                                     This usually degrades performance on single disks.");
-                Console.WriteLine();
-                Console.WriteLine("Exit Codes:");
-                Console.WriteLine("0 - No Error");
-                Console.WriteLine("1 - Invalid Arguments");
-                Console.WriteLine("2 - No Space Available");
-                Console.WriteLine("3 - Error During Execution (see logs for more information)");
-                Console.WriteLine();
-                return 0;
-            }
+                return PrintHelp();
+
 
             string maincommand = cmdargs.Keys[0];
             ICommand c = null;
@@ -134,6 +103,7 @@ namespace ServerBackup
             catch (System.Exception e)
             {
                 _Logger.Fatal("Unknown command", e);
+                PrintHelp();
                 return (int)ExitCodes.InvalidArguments;
             }
             //Since hashing and zip output to single files, not directories, Set the appropriate Destination File Name property
@@ -231,6 +201,49 @@ namespace ServerBackup
             return (int)ExitCodes.NoError;
         }
 
+        private static int PrintHelp()
+        {
+            //Print help
+            Console.WriteLine("[ServerBackup Help]");
+            Console.WriteLine("ServerBackup <command> <source> <dest> [options]");
+            Console.WriteLine();
+            Console.WriteLine("Commands:");
+            Console.WriteLine("copy                  Copies files from <source> to <dest>");
+            Console.WriteLine("hash                  Checksum on <source> written to <dest>");
+            Console.WriteLine("delete                Deltes files in <source>");
+            Console.WriteLine("verify                Verifies md5sums in <source> against <dest>");
+            //Console.WriteLine("simulate              Simulates a copy by printing to console");
+            Console.WriteLine();
+            Console.WriteLine("Options:");
+            Console.WriteLine("-include <regex mask>            Includes files matching regular expression");
+            Console.WriteLine("-exclude <regex mask>            Excludes files matching regular expression");
+            Console.WriteLine();
+            Console.WriteLine("Note: If -include is specified, only files matching will be included in <source>");
+            Console.WriteLine("      If -exclude is specified, only files that do not match will be included in <source>");
+            Console.WriteLine("      If both -include and -exlude is specified, only files matching -include EXCEPT for ones that also match -exclude will be in <source>");
+            Console.WriteLine("      Lastly, multiple -include and -exclude expressions can be used.");
+            Console.WriteLine();
+            Console.WriteLine("-newerthan <date>                Include files newer than date");
+            Console.WriteLine("-newerthan <number>              Include files newer than <number> days old");
+            Console.WriteLine("-olderthan <date>                Include files older than date");
+            Console.WriteLine("-olderthan <number>              Include files older than <number> days old");
+            Console.WriteLine("-verify                          Verifies that a file was copied correctly by comparing MD5");
+            Console.WriteLine("-ensurespace                     Ensures the destination has free space before copy.  Will error if not.");
+            Console.WriteLine("                                 Not supported on some destinations.");
+            Console.WriteLine("-simulate                        Print action to console instead of executing");
+            Console.WriteLine("                                     Useful to test file matching is correct.");
+            Console.WriteLine("-threads <number>                Enable multithreading.  Zip files cannot be threaded.");
+            Console.WriteLine("                                     This usually degrades performance on single disks.");
+            Console.WriteLine();
+            Console.WriteLine("Exit Codes:");
+            Console.WriteLine("0 - No Error");
+            Console.WriteLine("1 - Invalid Arguments");
+            Console.WriteLine("2 - No Space Available");
+            Console.WriteLine("3 - Error During Execution (see logs for more information)");
+            Console.WriteLine();
+            return 0;
+        }
+
         public static ICommand DetermineCommand(IInternalLogger _Logger, String maincommand)
         {
             ICommand c = null;
@@ -240,8 +253,7 @@ namespace ServerBackup
                 case "delete": c = new CommandDelete(_Logger); break;
                 case "hash": c = new CommandHash(_Logger); break;
                 case "zip": c = new CommandZip(_Logger); break;
-
-                //case "simulate": c = new CommandSimulate(); break;
+                case "verify": throw new NotImplementedException("Sorry, this feature is not yet implemented.");
                 default: throw new Exception("Unknown command");
             }
             return c;
@@ -251,7 +263,7 @@ namespace ServerBackup
         {
             //Build up FileSelector from arguments
             string sourcedirectory = GetSource(cmdargs);
-            //string destinationdirectory = GetDest(cmdargs);
+
             if (sourcedirectory == null)
                 return null;
             FileSelector fs = null;
@@ -283,8 +295,8 @@ namespace ServerBackup
                     return System.Security.Cryptography.HashAlgorithmName.SHA1;
                 case "sha256":
                     return System.Security.Cryptography.HashAlgorithmName.SHA256;
+                default: return System.Security.Cryptography.HashAlgorithmName.MD5;
             }
-            return System.Security.Cryptography.HashAlgorithmName.MD5;
         }
         public static IFileMatcher[] ParseIncludeMatchers(System.Collections.Specialized.NameValueCollection cmdargs)
         {
@@ -382,7 +394,6 @@ namespace ServerBackup
 
         }
 
-        //static Dictionary<string, string> cmdArguments = new Dictionary<string, string>();
         /// <summary>
         /// Parses command line arguments into a List of key/value pairs.  First argument is designated as the "command" argument.
         /// Subsequent arguments are either flags (key with no value) or key-value pairs.
@@ -410,7 +421,7 @@ namespace ServerBackup
                 }
                 //}
                 if (key != null)
-                    cmdlist.Add( NormalizeKey(key), value);
+                    cmdlist.Add(NormalizeKey(key), value);
                 i++;
             }
 
