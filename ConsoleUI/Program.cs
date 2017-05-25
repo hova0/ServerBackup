@@ -289,25 +289,25 @@ namespace ServerBackup
         public static IFileMatcher[] ParseIncludeMatchers(System.Collections.Specialized.NameValueCollection cmdargs)
         {
             List<IFileMatcher> matchers = new List<IFileMatcher>();
-            foreach (Tuple<string, string> keyvalue in cmdargs)
+            foreach (string keyvalue in cmdargs.Keys)
             {
-                string normalizedkey = NormalizeKey(keyvalue.Item1);
+                string normalizedkey = keyvalue;
                 if (normalizedkey == "include")
                 {
                     try
                     {
-                        matchers.Add(new FileMaskMatcher(keyvalue.Item2));
+                        matchers.Add(new FileMaskMatcher(cmdargs[keyvalue]));
                     }
                     catch (Exception e)
                     {
                         Console.Error.WriteLine(e.Message);
-                        Console.Error.WriteLine(string.Format("[ERROR] Discarded invalid filemask {0}", keyvalue.Item2));
+                        Console.Error.WriteLine(string.Format("[ERROR] Discarded invalid filemask {0}", cmdargs[keyvalue]));
                     }
                 }
 
                 if (normalizedkey == "newerthan" || normalizedkey == "olderthan")
                 {
-                    string dateargument = keyvalue.Item2;
+                    string dateargument = cmdargs[keyvalue];
                     DateTime constdate;
                     int daysold = 0;
                     if (DateTime.TryParse(dateargument, out constdate))
