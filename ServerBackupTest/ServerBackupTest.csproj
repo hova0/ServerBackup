@@ -66,6 +66,7 @@
     <Compile Include="Scheduler\ScheduledCommandTests.cs" />
     <Compile Include="ServerBackupLibraryTest.cs" />
     <Compile Include="StubLogger.cs" />
+    <Compile Include="UnitTest1.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ConsoleUI\ServerBackup.csproj">

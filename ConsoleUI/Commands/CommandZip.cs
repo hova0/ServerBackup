@@ -18,6 +18,8 @@ namespace ServerBackup
         public bool ContinueOnError { get; set; }
         private ICSharpCode.SharpZipLib.Zip.ZipOutputStream destinationzipfile;
 
+        private object lockObject = new object();
+
         public CommandZip(IInternalLogger _logger)
         {
             log = _logger;
@@ -49,7 +51,7 @@ namespace ServerBackup
             Ziptask.Dispose();
             return returnresult;
         }
-
+        
         public async Task<Boolean> RunAsync(String sourcefilename, String destinationfilename, CancellationToken cancellationToken)
         {
             //Unfortunately, you cannot multithread this.   Hence the compiler warning.
@@ -67,13 +69,13 @@ namespace ServerBackup
                 return true;
             }
 
-            lock (this)
+            //lock access to the zip file, since it cannot be multithreaded accessed.
+            lock (lockObject)
             {
 
                 string zipfilename = sourcefilename;
                 if (BaseDirectory != null)
                 {
-                    //log.Debug(String.Format("{0} => {1}  ({3})", zipfilename, zipfilename.Replace(BaseDirectory, ""), BaseDirectory));
                     zipfilename = zipfilename.Replace(BaseDirectory, "");
                 }
 
@@ -118,7 +120,6 @@ namespace ServerBackup
                     {
                         //Clean up
                         rs.Dispose();
-                        //System.IO.File.Delete(destinationfilename);
                         CommandResult = null;
                         log.Fatal(sourcefilename + " aborted.", null);
                         return false;
