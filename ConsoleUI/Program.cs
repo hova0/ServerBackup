@@ -131,7 +131,7 @@ namespace ServerBackup
             {
                 int t = 1;
                 Int32.TryParse(cmdargs["threads"], out t);
-                cr.Threads = t;
+                cr.Threads = t == 0 ? 1 : t;
             }
             //Check global flag to see if there was any problem in getting source of dest directories
             if (fatalError)
