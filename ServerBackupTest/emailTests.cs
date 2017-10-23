@@ -14,21 +14,25 @@ namespace ServerBackup.Tests
         [TestMethod()]
         public void EmailSendTest()
         {
-            Assert.IsTrue( email.Send("Test@example.com", "someone@example.com", "test Subject", "test Body"));
+            if(email.IsEmailConfigured())
+                Assert.IsTrue( email.Send("Test@example.com", "someone@example.com", "test Subject", "test Body"));
 
         }
 
         [TestMethod()]
         public void EmailSendAsyncTest()
         {
+            if(email.IsEmailConfigured())
             email.SendAsync("Test@example.com", "someone@example.com", "test Subject", "test Body");
         }
 
         [TestMethod()]
         public void MultipleEmailSendTest()
         {
+            if(email.IsEmailConfigured()) {
             Assert.IsTrue(email.Send("Test@example.com;Test2@example.com", "someone@example.com", "test Subject", "test Body"));
             Assert.IsTrue(email.Send("Test@example.com,Test2@example.com", "someone@example.com", "test Subject", "test Body"));
+                }
         }
 
 

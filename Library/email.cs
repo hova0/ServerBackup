@@ -55,9 +55,13 @@ namespace EWR.ServerBackup.Library
         public static bool IsEmailConfigured()
         {
             System.Net.Mail.SmtpClient sc = new System.Net.Mail.SmtpClient();
-            if (sc.Credentials != null)
+            if (sc.Credentials != null && sc.Host != "127.0.0.1")
             {
+                
                 sc.Dispose();
+
+
+
                 return true;
             }
             sc.Dispose();

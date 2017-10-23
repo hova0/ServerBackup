@@ -46,7 +46,8 @@ namespace ServerBackupTest
 
         }
         [TestMethod]
-        [ExpectedException(typeof(Exception))]
+        // [ExpectedException(typeof(Exception))]  This was removed, because sometimes a network directory might not exist
+        // or USB drive not plugged in.   So when scheduled, the directory might be created during the time it runs.
         public void ConstructorFileSelector_MissingDirectoryTest()
         {
             ServerBackup.FileSelector fs = new ServerBackup.FileSelector(@"C:\sdvmnknlkj4newldnlksndlfk\");
